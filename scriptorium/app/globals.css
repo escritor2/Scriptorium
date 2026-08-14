@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+:root {
+  --gold: #c9a86a;
+  --gold-claro: #e6c98a;
+  --tinta: #0b1020;
+}
+
+body {
+  background: var(--tinta);
+  color: #e8e3d8;
+  font-family: var(--font-cormorant), Georgia, serif;
+}
+
+.font-title {
+  font-family: var(--font-cinzel), Georgia, serif;
+}
+
+@keyframes flutuar {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(3rem, -2rem, 0) scale(1.08); }
+}
+
+.placa {
+  font-family: var(--font-cinzel), Georgia, serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  color: #0b1020;
+  padding: 0.5rem 1.75rem;
+  background: linear-gradient(180deg, #e6c98a, #c9a86a);
+  clip-path: polygon(6% 0, 94% 0, 100% 50%, 94% 100%, 6% 100%, 0 50%);
+  transition: filter 0.2s;
+  display: inline-block;
+}
+.placa:hover { filter: brightness(1.15); }
+
+.placa-escura {
+  background: linear-gradient(180deg, #1b2440, #141b2e);
+  color: #e6c98a;
+}
+
+@keyframes girar {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
