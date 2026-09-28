@@ -1,25 +1,44 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { jwtVerify } from "jose";
-
-const segredo = new TextEncoder().encode(process.env.JWT_SECRET || "segredo-fallback");
+import { createServerClient } from "@supabase/ssr";
 
 export async function middleware(req: NextRequest) {
-  const token = req.cookies.get("autor_session")?.value;
-  const ehLogin = req.nextUrl.pathname === "/autor/login";
+  let res = NextResponse.next({ request: req });
 
-  if (!token) {
-    if (ehLogin) return NextResponse.next();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return req.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value));
+          res = NextResponse.next({ request: req });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            res.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const ehLogin = req.nextUrl.pathname === "/autor/login";
+  const ehCadastro = req.nextUrl.pathname === "/autor/cadastro";
+
+  if (!user && !ehLogin && !ehCadastro) {
     return NextResponse.redirect(new URL("/autor/login", req.url));
   }
-  try {
-    await jwtVerify(token, segredo);
-    return NextResponse.next();
-  } catch {
-    const res = NextResponse.redirect(new URL("/autor/login", req.url));
-    res.cookies.delete("autor_session");
-    return res;
+  if (user && (ehLogin || ehCadastro)) {
+    return NextResponse.redirect(new URL("/autor/painel", req.url));
   }
+
+  return res;
 }
 
 export const config = { matcher: "/autor/:path*" };

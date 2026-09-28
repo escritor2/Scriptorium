@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
+import BackButton from "@/components/BackButton";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,7 @@ export default async function PaginaLivro({ params }: { params: Promise<{ id: st
 
   return (
     <section className="mx-auto max-w-4xl px-6 py-16">
+      <BackButton fallbackHref="/livros" />
       <div className="grid gap-10 sm:grid-cols-[240px_1fr]">
         {livro.capa_url ? (
           <img src={livro.capa_url} alt={"Capa de " + livro.titulo} className="w-full rounded border border-[#c9a86a]/40 object-cover" />

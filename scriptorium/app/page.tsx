@@ -13,6 +13,18 @@ export default async function Home() {
 
   const livros = (data ?? []) as Livro[];
 
+  const autorIds = Array.from(new Set(livros.map((l) => l.autor_id).filter(Boolean))) as string[];
+  const [{ data: perfis }, { data: capsExistentes }] = await Promise.all([
+    autorIds.length
+      ? supabase.from("perfis_autor").select("id, nome").in("id", autorIds)
+      : Promise.resolve({ data: [] as { id: string; nome: string }[] }),
+    livros.length
+      ? supabase.from("capitulos").select("livro_id").in("livro_id", livros.map((l) => l.id)).eq("numero", 1)
+      : Promise.resolve({ data: [] as { livro_id: string }[] }),
+  ]);
+  const nomeAutorPorId = new Map((perfis ?? []).map((p) => [p.id, p.nome]));
+  const livrosComCapitulo = new Set((capsExistentes ?? []).map((c) => c.livro_id));
+
   return (
     <>
       <section className="mx-auto max-w-6xl px-6 pt-20 pb-10 text-center">
@@ -31,9 +43,14 @@ export default async function Home() {
             Nenhum livro inscrito ainda. Entre na Área do Autor para publicar o primeiro. ✒️
           </p>
         ) : (
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {livros.map((livro) => (
-              <BookCard key={livro.id} livro={livro} />
+              <BookCard
+                key={livro.id}
+                livro={livro}
+                autorNome={livro.autor_id ? nomeAutorPorId.get(livro.autor_id) : undefined}
+                temCapitulos={livrosComCapitulo.has(livro.id)}
+              />
             ))}
           </div>
         )}

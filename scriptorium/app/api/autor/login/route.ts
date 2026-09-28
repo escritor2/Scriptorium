@@ -1,41 +1,26 @@
-import { SignJWT } from "jose";
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { supabaseServer } from "@/lib/supabase/server";
 
 export async function POST(req: Request) {
-  let senha: string;
+  let email: string, senha: string;
   try {
-    senha = (await req.json()).senha ?? "";
+    const body = await req.json();
+    email = (body.email ?? "").trim();
+    senha = body.senha ?? "";
   } catch {
     return NextResponse.json({ erro: "Requisição inválida." }, { status: 400 });
   }
 
-  const senhaCorreta = process.env.SENHA_AUTOR;
-
-  if (!senhaCorreta) {
-    return NextResponse.json(
-      { erro: "SENHA_AUTOR não está definida no .env.local." },
-      { status: 500 }
-    );
+  if (!email || !senha) {
+    return NextResponse.json({ erro: "Preencha e-mail e senha." }, { status: 400 });
   }
 
-  if (senha !== senhaCorreta) {
-    return NextResponse.json({ erro: "Senha incorreta." }, { status: 401 });
+  const supabase = await supabaseServer();
+  const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
+
+  if (error) {
+    return NextResponse.json({ erro: "E-mail ou senha incorretos." }, { status: 401 });
   }
-
-  const token = await new SignJWT({ role: "autor" })
-    .setProtectedHeader({ alg: "HS256" })
-    .setExpirationTime("7d")
-    .sign(new TextEncoder().encode(process.env.JWT_SECRET || "segredo-fallback"));
-
-  const cookieStore = await cookies(); 
-  cookieStore.set("autor_session", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7,
-  });
 
   return NextResponse.json({ ok: true });
 }

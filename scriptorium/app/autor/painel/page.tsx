@@ -1,25 +1,36 @@
-import { supabase } from "@/lib/supabase";
+import { supabaseServer } from "@/lib/supabase/server";
+import { autorLogado } from "@/lib/auth";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
 export default async function Painel() {
-  const { data: livros } = await supabase.from("livros").select("*").order("criado_em", { ascending: false });
+  const autor = await autorLogado();
+  const supabase = await supabaseServer();
+
+  // painel mostra só os livros DESTE autor — livros de outros autores
+  // ficam visíveis apenas em /livros (leitura) e não aparecem aqui
+  const { data: livros } = await supabase
+    .from("livros")
+    .select("*")
+    .eq("autor_id", autor?.id)
+    .order("criado_em", { ascending: false });
 
   return (
     <section className="mx-auto max-w-5xl px-6 py-16">
       <div className="mb-10 flex flex-wrap items-center justify-between gap-4">
-        <h1 className="font-title text-2xl tracking-[0.2em] text-[#e6c98a]">PAINEL DO AUTOR</h1>
+        <h1 className="font-title text-2xl tracking-[0.2em] text-[#e6c98a]">MEUS LIVROS</h1>
         <div className="flex flex-wrap gap-3">
           <Link href="/autor/livro/novo" className="placa">NOVO LIVRO</Link>
           <Link href="/autor/capitulo/novo" className="placa">NOVO CAPÍTULO</Link>
+          <Link href="/livros" className="placa placa-escura">VER ACERVO COMPLETO</Link>
           <form action="/api/autor/logout" method="POST">
             <button className="placa placa-escura">SAIR</button>
           </form>
         </div>
       </div>
       {(livros ?? []).length === 0 ? (
-        <p className="text-[#c9a86a]/70">Nenhum livro ainda. Inscreva o primeiro! ✒️</p>
+        <p className="text-[#c9a86a]/70">Você ainda não escreveu nenhum livro. Inscreva o primeiro! ✒️</p>
       ) : (
         <ul className="flex flex-col gap-4">
           {(livros ?? []).map((livro) => (

@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import LeituraBackground from "@/components/LeituraBackground";
+import BackButton from "@/components/BackButton";
 
 export const dynamic = "force-dynamic";
 
@@ -12,12 +13,17 @@ export default async function LerCapitulo({ params }: { params: Promise<{ id: st
 
   if (!cap) return <p className="p-10 text-center text-[#c9a86a]">Capítulo não encontrado.</p>;
 
+  // verifica se existe um PRÓXIMO capítulo de verdade, em vez de assumir numero+1
+  const { data: proximoCap } = await supabase
+    .from("capitulos").select("numero").eq("livro_id", id).eq("numero", numero + 1).maybeSingle();
+
   const paragrafos = String(cap.conteudo).split(/\n+/).map((p: string) => p.trim()).filter(Boolean);
 
   return (
     <>
       <LeituraBackground />
       <article className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+        <BackButton fallbackHref={"/livro/" + id} />
         <div className="rounded-lg border border-[#c9a86a]/25 bg-[#0d1428]/85 p-8 shadow-[0_0_60px_rgba(0,0,0,0.6)] backdrop-blur-sm sm:p-12">
           <p className="font-title text-xs tracking-[0.35em] text-[#c9a86a]">CAPÍTULO {numero}</p>
           <h1 className="font-title mt-3 text-3xl text-[#e6c98a] sm:text-4xl">{cap.titulo}</h1>
@@ -48,7 +54,11 @@ export default async function LerCapitulo({ params }: { params: Promise<{ id: st
             <span />
           )}
           <Link className="placa placa-escura" href={"/livro/" + id}>SUMÁRIO</Link>
-          <Link className="placa" href={"/livro/" + id + "/capitulo/" + (numero + 1)}>PRÓXIMO</Link>
+          {proximoCap ? (
+            <Link className="placa" href={"/livro/" + id + "/capitulo/" + (numero + 1)}>PRÓXIMO</Link>
+          ) : (
+            <Link className="placa" href={"/livro/" + id}>FINALIZAR LEITURA</Link>
+          )}
         </nav>
       </article>
     </>

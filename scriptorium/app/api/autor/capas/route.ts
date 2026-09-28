@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { ehAutor } from "@/lib/auth";
+import { autorLogado } from "@/lib/auth";
 
 export async function POST(req: Request) {
-  if (!(await ehAutor())) return NextResponse.json({ erro: "Sem sessão." }, { status: 401 });
+  const autor = await autorLogado();
+  if (!autor) return NextResponse.json({ erro: "Sem sessão." }, { status: 401 });
 
   const form = await req.formData();
   const capa = form.get("capa");

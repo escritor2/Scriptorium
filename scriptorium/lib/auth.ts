@@ -1,14 +1,11 @@
-import { cookies } from "next/headers";
-import { jwtVerify } from "jose";
+import { supabaseServer } from "@/lib/supabase/server";
 
-export async function ehAutor(): Promise<boolean> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("autor_session")?.value;
-  if (!token) return false;
-  try {
-    await jwtVerify(token, new TextEncoder().encode(process.env.JWT_SECRET || ""));
-    return true;
-  } catch {
-    return false;
-  }
+// Retorna o usuário autor logado (ou null). Substitui o antigo
+// "ehAutor()" de senha única — agora cada autor tem sua própria conta.
+export async function autorLogado() {
+  const supabase = await supabaseServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  return user;
 }
